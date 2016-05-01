@@ -46,14 +46,14 @@ public class ChatDialog extends JDialog implements ActionListener, DocumentListe
 		
 
 		myFormat = new SimpleAttributeSet();
-		StyleConstants.setForeground(myFormat, Color.GRAY);		
+		StyleConstants.setForeground(myFormat, Color.BLUE);		
 
 		hisFormat = new SimpleAttributeSet();
-		StyleConstants.setForeground(hisFormat, Color.LIGHT_GRAY);
+		StyleConstants.setForeground(hisFormat, new Color(39,125,44));
 		
 
 		sysFormat = new SimpleAttributeSet();
-		StyleConstants.setForeground(hisFormat, Color.BLACK);
+		StyleConstants.setForeground(sysFormat, Color.BLACK);
 		
 		tfMain = new JTextField();
 		tfMain.getDocument().addDocumentListener(this);
@@ -84,9 +84,9 @@ public class ChatDialog extends JDialog implements ActionListener, DocumentListe
 		    try {
 				long curTime = System.currentTimeMillis();
 				if(curTime - lastMessageTime > 60000) {
-					String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date(lastMessageTime));
+					String date = new SimpleDateFormat("dd-MM-yyyy").format(new Date(lastMessageTime));
 					String time = new SimpleDateFormat("hh:mm:ss a").format(new Date(lastMessageTime));
-					doc.insertString(doc.getLength(), "Last message: " + date + ", " + time + "\n", sysFormat);					
+					doc.insertString(doc.getLength(), "System: Last message: " + date + ", " + time + "\n", sysFormat);					
 				}
 				doc.insertString(doc.getLength(), myName + ": " + tfMain.getText().trim() + "\n", myFormat);
 				lastMessageTime = curTime;
@@ -122,9 +122,9 @@ public class ChatDialog extends JDialog implements ActionListener, DocumentListe
 			}
 			long curTime = System.currentTimeMillis();
 			if(curTime - lastMessageTime > 60000) {
-				String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date(lastMessageTime));
+				String date = new SimpleDateFormat("dd-MM-yyyy").format(new Date(lastMessageTime));
 				String time = new SimpleDateFormat("hh:mm:ss a").format(new Date(lastMessageTime));
-				doc.insertString(doc.getLength(), "Last message: " + date + ", " + time + "\n", sysFormat);
+				doc.insertString(doc.getLength(), "System: Last message: " + date + ", " + time + "\n", sysFormat);
 			}
 			lastMessageTime = curTime;
 			doc.insertString(doc.getLength(), hisName + ": " + message + "\n", hisFormat);
@@ -243,6 +243,24 @@ public class ChatDialog extends JDialog implements ActionListener, DocumentListe
 			File f = fileList.get(id);
 			new FileSender(f, f.length(), ip, port);
 		} catch(ArrayIndexOutOfBoundsException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void buddyQuit(String hisName) {
+		try {
+			doc.insertString(doc.getLength(),"System: " + hisName + " just went offline.\n",  sysFormat);
+			btnSend.setEnabled(false);
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void buddyReturned(String hisName) {
+		try {
+			doc.insertString(doc.getLength(),"System: " + hisName + " has come back online.\n",  sysFormat);
+			btnSend.setEnabled(true);
+		} catch (BadLocationException e) {
 			e.printStackTrace();
 		}
 	}

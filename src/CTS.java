@@ -13,7 +13,6 @@ public class CTS implements Runnable {
 	private MyTableModel tableModel;
 	private ClientProgram parent;
 	private JFileChooser fileChooser;
-	private String myName;
 	
 	public CTS(String ip, int port, Map<String, BuddyInfo> buddyList, MyTableModel tableModel, ClientProgram parent) throws IOException {
 		this.ip = ip;
@@ -46,6 +45,7 @@ public class CTS implements Runnable {
 								try {
 									talker.send("BUDDY_ACCEPTED " + buddyRequester);
 									buddyList.put(buddyRequester, new BuddyInfo(buddyRequester, BuddyInfo.ONLINE));
+									updateBuddyList();
 								} catch (IOException e) {
 									e.printStackTrace();
 								}
@@ -110,6 +110,8 @@ public class CTS implements Runnable {
 					buddyList.get(uname).status = Integer.parseInt(cmd.split("\\s+")[2]);
 					if(buddyList.get(uname).status == BuddyInfo.OFFLINE) {
 						parent.buddyQuit(uname);
+					} else {
+						parent.buddyReturned(uname);						
 					}
 					updateBuddyList();
 				} else if(cmd.startsWith("CHAT_MESSAGE")) {
@@ -202,7 +204,6 @@ public class CTS implements Runnable {
 		}
 		String msg = talker.recieve();
 		if(msg.startsWith("+OK")) {
-			myName = username;
 			new Thread(this).start();
 		} else {
 			if(command.equals("LOGIN")) {

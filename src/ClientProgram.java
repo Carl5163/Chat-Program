@@ -234,16 +234,21 @@ public class ClientProgram extends JFrame implements ActionListener, DocumentLis
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		
+		System.out.println("Hey1");
 		if(e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+			System.out.println("Hey2");
 			int[] rows = tblBuddies.getSelectedRows();
 			for(int i = 0; i < rows.length; i++) {
-				String hisName = (String) tableModel.getValueAt(tblBuddies.convertRowIndexToModel(i), 0);
+				String hisName = (String) tableModel.getValueAt(tblBuddies.convertRowIndexToModel(rows[i]), 0);
+				System.out.println(".............." + hisName);
 				if(buddyList.get(hisName).status == BuddyInfo.ONLINE) {
+					System.out.println("Hey" + i+1);
 					if(chatWindowMap.get(hisName) == null) {
+						System.out.println("Hey" + i+1 + ", 1");
 						ChatDialog dialog = new ChatDialog(myName, hisName, this, cts);
 						chatWindowMap.put(hisName, dialog);
 					} else {
+						System.out.println("Hey" + i+1 + ", 2");
 						chatWindowMap.get(hisName).requestFocus();
 						chatWindowMap.get(hisName).setVisible(true);
 					}
@@ -273,7 +278,15 @@ public class ClientProgram extends JFrame implements ActionListener, DocumentLis
 	public void buddyQuit(String hisName) {
 		ChatDialog dialog = chatWindowMap.get(hisName);
 		if(dialog != null) {
-			dialog.setVisible(false);
+			dialog.buddyQuit(hisName);
+		}
+	}
+	
+
+	public void buddyReturned(String hisName) {
+		ChatDialog dialog = chatWindowMap.get(hisName);
+		if(dialog != null) {
+			dialog.buddyReturned(hisName);
 		}
 	}
 
