@@ -1,5 +1,7 @@
 import java.io.*;
 import java.net.*;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 import javax.swing.*;
@@ -173,7 +175,12 @@ public class CTS implements Runnable {
 			}
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog(parent, "You have lost connection or the server has shut down.", "Connection lost.", JOptionPane.ERROR_MESSAGE);
-			e.printStackTrace();
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					parent.restart();
+				}				
+			});
 		}
 	}
 	
@@ -191,10 +198,10 @@ public class CTS implements Runnable {
 	public void connect(String command, String username, String password) throws UnknownHostException, 
 																				 IOException, 
 																				 LoginFailedException,
-																				 RegisterFailedException {
+																				 RegisterFailedException, SSLException {
 
 		try {
-			talker = new Talker(new Socket(ip, port), username, "Central Server");
+			talker = new Talker(ip, port, username, "Central Server");
 			talker.send(command);
 			talker.send("USER " + username);
 			talker.send("PASS " + password);

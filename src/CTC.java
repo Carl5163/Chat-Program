@@ -1,5 +1,6 @@
 import java.io.*;
-import java.net.*;
+
+import javax.net.ssl.*;
 
 public class CTC implements Runnable {
 	
@@ -7,7 +8,7 @@ public class CTC implements Runnable {
 	private UserMap userMap;
 	private User parent;
 	
-	public CTC(Socket socket, UserMap userMap, String username) {
+	public CTC(SSLSocket socket, UserMap userMap, String username) {
 		try {
 			talker = new Talker(socket, "Central Server", username);
 			this.userMap = userMap;

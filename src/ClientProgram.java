@@ -2,10 +2,12 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.net.*;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
-import javax.swing.GroupLayout.*;
 import javax.swing.*;
+import javax.swing.GroupLayout.*;
 import javax.swing.event.*;
 import javax.swing.text.*;
 
@@ -45,7 +47,7 @@ public class ClientProgram extends JFrame implements ActionListener, DocumentLis
 		layoutFrame();
 		buddyList = new HashMap<String, BuddyInfo>();
 		chatWindowMap = new HashMap<String, ChatDialog>();
-		cts = new CTS("127.0.0.1", 12354, buddyList, tableModel, this);
+		cts = new CTS("127.0.0.1", 12345, buddyList, tableModel, this);
 		setVisible(true);
 	}
 
@@ -166,9 +168,12 @@ public class ClientProgram extends JFrame implements ActionListener, DocumentLis
 			lblUsername.setForeground(Color.BLACK);
 			lblPassword.setForeground(Color.BLACK);
 			try {
+				System.out.println("sup");
 				cts.connect(command, tfUsername.getText().trim(), new String(tfPassword.getPassword()).trim());
-			} catch(ConnectException e) {
-				taErrors.setText("Error: \n * Could not connect to server: Server did not respond.");
+			} catch(ConnectException | SSLException e) {
+				e.printStackTrace();
+				System.out.println("YO");
+				taErrors.setText("Error: \n * " + e.getMessage());
 				return;
 			}
 			myName = tfUsername.getText().trim();
@@ -234,21 +239,15 @@ public class ClientProgram extends JFrame implements ActionListener, DocumentLis
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		System.out.println("Hey1");
 		if(e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
-			System.out.println("Hey2");
 			int[] rows = tblBuddies.getSelectedRows();
 			for(int i = 0; i < rows.length; i++) {
 				String hisName = (String) tableModel.getValueAt(tblBuddies.convertRowIndexToModel(rows[i]), 0);
-				System.out.println(".............." + hisName);
 				if(buddyList.get(hisName).status == BuddyInfo.ONLINE) {
-					System.out.println("Hey" + i+1);
 					if(chatWindowMap.get(hisName) == null) {
-						System.out.println("Hey" + i+1 + ", 1");
 						ChatDialog dialog = new ChatDialog(myName, hisName, this, cts);
 						chatWindowMap.put(hisName, dialog);
 					} else {
-						System.out.println("Hey" + i+1 + ", 2");
 						chatWindowMap.get(hisName).requestFocus();
 						chatWindowMap.get(hisName).setVisible(true);
 					}
@@ -302,6 +301,7 @@ public class ClientProgram extends JFrame implements ActionListener, DocumentLis
 				return dialog.newFileSendRequest(fileName, size);
 			}
 		}
+		
 		return JOptionPane.NO_OPTION;
 		
 	}
@@ -318,6 +318,15 @@ public class ClientProgram extends JFrame implements ActionListener, DocumentLis
 				dialog.newFileSendAccepted(uname, Integer.parseInt(id), ip, port);
 			}
 		}	
+	}
+
+	public void restart() {
+		dispose();
+		try {
+			new ClientProgram();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 }
