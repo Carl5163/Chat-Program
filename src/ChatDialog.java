@@ -9,6 +9,10 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.text.*;
+<<<<<<< HEAD
+=======
+
+>>>>>>> 9721da1a807290f547ccd2173329a5ec3a52d131
 
 @SuppressWarnings("serial")
 public class ChatDialog extends JDialog implements ActionListener, DocumentListener , DropTargetListener{
