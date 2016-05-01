@@ -1,4 +1,3 @@
-
 public class BuddyInfo {
 	
 	public static int ONLINE = 0;

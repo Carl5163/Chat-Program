@@ -210,7 +210,12 @@ public class ClientProgram extends JFrame implements ActionListener, DocumentLis
 		try {
 			lblUsername.setForeground(Color.BLACK);
 			lblPassword.setForeground(Color.BLACK);
-			cts.connect(command, tfUsername.getText().trim(), new String(tfPassword.getPassword()).trim());
+			try {
+				cts.connect(command, tfUsername.getText().trim(), new String(tfPassword.getPassword()).trim());
+			} catch(ConnectException e) {
+				taErrors.setText("Error: \n * Could not connect to server: Server did not respond.");
+				return;
+			}
 			myName = tfUsername.getText().trim();
 			centerPanel.setVisible(false);
 			bottomPanel.setVisible(false);

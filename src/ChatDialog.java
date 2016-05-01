@@ -1,36 +1,14 @@
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
-import java.awt.dnd.DnDConstants;
-import java.awt.dnd.DropTarget;
-import java.awt.dnd.DropTargetDragEvent;
-import java.awt.dnd.DropTargetDropEvent;
-import java.awt.dnd.DropTargetEvent;
-import java.awt.dnd.DropTargetListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Vector;
+import java.awt.*;
+import java.awt.datatransfer.*;
+import java.awt.dnd.*;
+import java.awt.event.*;
+import java.io.*;
+import java.text.*;
+import java.util.*;
 
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextField;
-import javax.swing.JTextPane;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
-
+import javax.swing.*;
+import javax.swing.event.*;
+import javax.swing.text.*;
 
 @SuppressWarnings("serial")
 public class ChatDialog extends JDialog implements ActionListener, DocumentListener , DropTargetListener{
@@ -61,7 +39,7 @@ public class ChatDialog extends JDialog implements ActionListener, DocumentListe
 		
 		tpMain = new JTextPane();
 		tpMain.setEditable(false);
-		DropTarget target = new DropTarget(tpMain, this);
+		new DropTarget(tpMain, this);
 		JScrollPane scroll = new JScrollPane(tpMain);
 		panel.add(scroll, BorderLayout.CENTER);
 		doc = tpMain.getStyledDocument();
@@ -178,8 +156,9 @@ public class ChatDialog extends JDialog implements ActionListener, DocumentListe
 				if (flavors[i].isFlavorJavaFileListType()) {
 				    	  
 					dtde.acceptDrag(DnDConstants.ACTION_COPY);
-					
-					java.util.List list = (java.util.List) tr.getTransferData(flavors[i]);
+										
+					@SuppressWarnings("unchecked")
+					java.util.List<File> list = (java.util.List<File>) tr.getTransferData(flavors[i]);
 					if(list.size() > 1) {
 						dtde.rejectDrag();
 					}
@@ -214,6 +193,7 @@ public class ChatDialog extends JDialog implements ActionListener, DocumentListe
 				    	  
 					dtde.acceptDrop(DnDConstants.ACTION_COPY);
 					
+					@SuppressWarnings("rawtypes")
 					java.util.List list = (java.util.List) tr.getTransferData(flavors[i]);
 					if(list.size() > 1) {
 						dtde.rejectDrop();

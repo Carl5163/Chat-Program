@@ -1,10 +1,6 @@
-
-
-
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
-
 
 @SuppressWarnings("serial")
 public class MyTableModel extends AbstractTableModel implements ListDataListener {
