@@ -15,7 +15,6 @@ public class CTS implements Runnable {
 	private MyTableModelRequests tableModelRequests;
 	private ClientProgram parent;
 	private JFileChooser fileChooser;
-	private String myName;
 	
 	public CTS(String ip, int port, Map<String, BuddyInfo> buddyList, MyTableModel tableModel, MyTableModelRequests tableModelRequests, ClientProgram parent) throws IOException {
 		this.ip = ip;
@@ -192,13 +191,17 @@ public class CTS implements Runnable {
 																				 LoginFailedException,
 																				 RegisterFailedException {
 
-		talker = new Talker(new Socket(ip, port), username, "Central Server");
-		talker.send(command);
-		talker.send("USER " + username);
-		talker.send("PASS " + password);
+		try {
+			talker = new Talker(new Socket(ip, port), username, "Central Server");
+			talker.send(command);
+			talker.send("USER " + username);
+			talker.send("PASS " + password);
+		} catch(ConnectException e) {
+			String msg = "Could not connect to server: Server did not respond.";
+			throw new ConnectException(msg);
+		}
 		String msg = talker.recieve();
 		if(msg.startsWith("+OK")) {
-			myName = username; 
 			new Thread(this).start();
 		} else {
 			if(command.equals("LOGIN")) {
@@ -223,7 +226,6 @@ public class CTS implements Runnable {
 				throw new RegisterFailedException(msg, userBad, passBad, report);
 			}
 		}
-		
 	}
 	
 	public void send(String message) throws IOException {
