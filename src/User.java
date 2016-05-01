@@ -11,7 +11,6 @@ public class User {
 	private CTC ctc;
 
 	private Vector<String> buddyList;
-	private Vector<String> pendingBuddyRequests;
 	
 	public User(String username, String password, Map<String, User> userMap, CTC ctc) {
 		this(username, password, userMap);
@@ -22,22 +21,15 @@ public class User {
 		this.username = username;
 		this.password = password;
 		buddyList = new Vector<String>();
-		pendingBuddyRequests = new Vector<String>();
 	}
 	
 	public User(DataInputStream dis, Map<String, User> userMap) throws IOException {
 		username = dis.readUTF();
 		password = dis.readUTF();
 		buddyList = new Vector<String>();
-		pendingBuddyRequests = new Vector<String>();
 		int numBuddies = dis.readInt();
 		for(int i = 0; i < numBuddies; i++) {
 			buddyList.add(dis.readUTF());
-		}
-		int numRequests = dis.readInt();
-		for(int i = 0; i < numRequests; i++) {
-			pendingBuddyRequests.add(
-					dis.readUTF());
 		}
 		userMap.put(username, this);
 	}
@@ -54,10 +46,6 @@ public class User {
 			for(String bud : buddyList) {
 				dos.writeUTF(bud);
 			}
-			dos.writeInt(pendingBuddyRequests.size());
-			for(String bud : pendingBuddyRequests) {
-				dos.writeUTF(bud);
-			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -71,10 +59,6 @@ public class User {
 		return buddyList;
 	}
 	
-	public Vector<String> getPendingRequests() {
-		return pendingBuddyRequests;
-	}
-
 	public boolean isOnline() {
 		return ctc != null;
 	}
@@ -90,26 +74,5 @@ public class User {
 	public int getStatus() {
 		return ctc == null ? BuddyInfo.OFFLINE : BuddyInfo.ONLINE;
 	}
-
-	public void addPendingBuddy(String bi) {
-		boolean bad = false;
-		for(int i = 0; i < pendingBuddyRequests.size(); i++) {
-			if(pendingBuddyRequests.get(i).equalsIgnoreCase(bi)) {
-				bad = true;
-			}
-		}
-		if(!bad) {
-			pendingBuddyRequests.add(bi);
-		}				
-	}
-	
-	public void removePendingBuddy(String bi) {
-		for(int i = 0; i < pendingBuddyRequests.size(); i++) {
-			if(pendingBuddyRequests.get(i).equalsIgnoreCase(bi)) {
-				pendingBuddyRequests.remove(i);
-			}
-		}
-	}
-
 	
 }

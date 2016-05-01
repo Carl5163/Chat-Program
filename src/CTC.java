@@ -35,12 +35,9 @@ public class CTC implements Runnable {
 								user.send("BUT_THAT_IS_YOU " + parent.getUsername());
 							} else {
 								user.send("BUDDY_REQ " + parent.getUsername());
-								user.addPendingBuddy(parent.getUsername());
-								userMap.write();
 							}
 						} else {
-							user.addPendingBuddy(reqUsername);
-							userMap.write();
+							talker.send("USER_OFFLINE " + reqUsername);
 						}
 					}
 				} else if(cmd.startsWith("BUDDY_DENIED")) {
@@ -49,8 +46,6 @@ public class CTC implements Runnable {
 					if(user != null) {
 						if(user.isOnline()) {
 							user.send("BUDDY_DENIED " + parent.getUsername());
-							parent.removePendingBuddy(user.getUsername());
-							userMap.write();
 						}
 					}
 				} else if(cmd.startsWith("BUDDY_ACCEPTED")) {
@@ -60,10 +55,8 @@ public class CTC implements Runnable {
 						if(user.isOnline()) {
 							user.send("BUDDY_ACCEPTED " + parent.getUsername());				
 						}
-
 						user.getBuddyList().add(parent.getUsername());
 						userMap.get(parent.getUsername()).getBuddyList().add(user.getUsername());
-						parent.removePendingBuddy(user.getUsername());
 						userMap.write();	
 						
 					}					
@@ -205,10 +198,6 @@ public class CTC implements Runnable {
 							if(userMap.get(buddyName) != null) {
 								talker.send(Integer.toString(userMap.get(buddyName).getStatus()));
 							}
-						}
-						talker.send(Integer.toString(maybeOldUser.getPendingRequests().size()));
-						for(String buddyName : maybeOldUser.getPendingRequests()) {
-							talker.send(buddyName);
 						}
 						for(String buddyName : maybeOldUser.getBuddyList()) {
 							if(userMap.get(buddyName) != null) {

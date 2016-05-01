@@ -10,19 +10,16 @@ public class CTS implements Runnable {
 	private String ip;
 	private int port;
 	private Map<String, BuddyInfo> buddyList;
-	private Vector<String> pendingRequests;
 	private MyTableModel tableModel;
-	private MyTableModelRequests tableModelRequests;
 	private ClientProgram parent;
 	private JFileChooser fileChooser;
+	private String myName;
 	
-	public CTS(String ip, int port, Map<String, BuddyInfo> buddyList, MyTableModel tableModel, MyTableModelRequests tableModelRequests, ClientProgram parent) throws IOException {
+	public CTS(String ip, int port, Map<String, BuddyInfo> buddyList, MyTableModel tableModel, ClientProgram parent) throws IOException {
 		this.ip = ip;
 		this.port = port;
 		this.buddyList = buddyList;
-		pendingRequests = new Vector<String>();
 		this.tableModel = tableModel;
-		this.tableModelRequests = tableModelRequests;
 		this.parent = parent;
 		fileChooser = new JFileChooser();
 	}
@@ -38,20 +35,27 @@ public class CTS implements Runnable {
 						String name = talker.recieve();
 						int status = Integer.parseInt(talker.recieve());
 						buddyList.put(name, new BuddyInfo(name, status));
-					}
-					int numRequests = Integer.parseInt(talker.recieve());					
-
-					for(int i = 0; i < numRequests; i++) {
-						String name = talker.recieve();
-						pendingRequests.add(name);
-					}
-					
+					}					
 					updateBuddyList();
 				} else if(cmd.startsWith("BUDDY_REQ")) {
 					String buddyRequester = cmd.split("\\s+")[1];
 					SwingUtilities.invokeLater(new Runnable() {
 						public void run() {
-							parent.newBuddyRequest(buddyRequester);
+							int ret = JOptionPane.showConfirmDialog(parent, "The user \"" + buddyRequester + "\" would like to be your buddy! Do you accept?", "New Buddy Request", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+							if(ret == JOptionPane.YES_OPTION) {
+								try {
+									talker.send("BUDDY_ACCEPTED " + buddyRequester);
+									buddyList.put(buddyRequester, new BuddyInfo(buddyRequester, BuddyInfo.ONLINE));
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+							} else {
+								try {
+									talker.send("BUDDY_DENIED " + buddyRequester);
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+							}
 						}
 					});
 					
@@ -178,10 +182,6 @@ public class CTS implements Runnable {
 				for(BuddyInfo bi : buddyList.values()) {
 					tableModel.add(bi);
 				}
-				tableModelRequests.clear();
-				for(String  bi : pendingRequests) {
-					tableModelRequests.add(bi);
-				}
 			}
 		});
 	}
@@ -202,6 +202,7 @@ public class CTS implements Runnable {
 		}
 		String msg = talker.recieve();
 		if(msg.startsWith("+OK")) {
+			myName = username;
 			new Thread(this).start();
 		} else {
 			if(command.equals("LOGIN")) {

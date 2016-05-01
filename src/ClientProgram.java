@@ -21,19 +21,14 @@ public class ClientProgram extends JFrame implements ActionListener, DocumentLis
 	private JLabel lblUsername;
 	private JLabel lblPassword;
 	private JPanel bottomPanel;
-	private JTabbedPane tabbedPanel;
+	private JPanel buddyPanel;
 	private JTextArea taErrors;
 	private JTable tblBuddies;
-	private JTable tblRequests;
 	private JButton btnAddBuddy;
-	private JButton btnAcceptRequest;
-	private JButton btnDeleteRequest;
 	private MyTableModel tableModel;
-	private MyTableModelRequests tableModelRequests;
 	private Map<String, BuddyInfo> buddyList;
 	private Map<String, ChatDialog> chatWindowMap;
 	private String myName;
-	private JTabbedPane tabbedPane;
 
 	public static void main(String[] args) {
 		try {
@@ -50,7 +45,7 @@ public class ClientProgram extends JFrame implements ActionListener, DocumentLis
 		layoutFrame();
 		buddyList = new HashMap<String, BuddyInfo>();
 		chatWindowMap = new HashMap<String, ChatDialog>();
-		cts = new CTS("127.0.0.1", 12354, buddyList, tableModel, tableModelRequests, this);
+		cts = new CTS("127.0.0.1", 12354, buddyList, tableModel, this);
 		setVisible(true);
 	}
 
@@ -69,7 +64,7 @@ public class ClientProgram extends JFrame implements ActionListener, DocumentLis
 		taErrors.setWrapStyleWord(true);
 		taErrors.setLineWrap(true);
 		bottomPanel.add(taErrors);
-		tabbedPanel = makeTabbedPanel();
+		buddyPanel = makeBuddyPanel();
 		getContentPane().add(bottomPanel, BorderLayout.CENTER);
 	}
 
@@ -116,9 +111,8 @@ public class ClientProgram extends JFrame implements ActionListener, DocumentLis
 		return panel;
 	}
 	
-	private JTabbedPane makeTabbedPanel() {
+	private JPanel makeBuddyPanel() {
 
-		tabbedPane = new JTabbedPane();
 		
 		JPanel panel = new JPanel(new BorderLayout());
 
@@ -139,39 +133,9 @@ public class ClientProgram extends JFrame implements ActionListener, DocumentLis
 		btnAddBuddy.setActionCommand("ADD_BUDDY");
 		btnAddBuddy.addActionListener(this);
 		bPanel.add(btnAddBuddy, BorderLayout.SOUTH);
-		panel.add(bPanel, BorderLayout.SOUTH);
+		panel.add(bPanel, BorderLayout.SOUTH);		
 		
-		tabbedPane.addTab("Buddy List", panel);
-		
-		panel = new JPanel(new BorderLayout());
-
-		tableModelRequests = new MyTableModelRequests();
-		tblRequests = new JTable(tableModelRequests);
-		tblRequests.addMouseListener(this);
-		tblRequests.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-				
-		scrollPane = new JScrollPane(tblRequests);
-		panel.add(scrollPane, BorderLayout.CENTER);
-		
-		JPanel acceptPanel = new JPanel(new BorderLayout());
-		btnAcceptRequest = new JButton("Accept Request");
-		btnAcceptRequest.setEnabled(false);
-		btnAcceptRequest.setActionCommand("ACCEPT_REQUEST");
-		btnAcceptRequest.addActionListener(this);
-		acceptPanel.add(btnAcceptRequest, BorderLayout.NORTH);
-		btnDeleteRequest = new JButton("Delete Request");
-		btnDeleteRequest.setEnabled(false);
-		btnDeleteRequest.setActionCommand("DELETE_REQUEST");
-		btnDeleteRequest.addActionListener(this);
-		acceptPanel.add(btnDeleteRequest, BorderLayout.SOUTH);
-		panel.add(acceptPanel, BorderLayout.SOUTH);
-		
-		tabbedPane.addTab("Buddy Requests", panel);
-		
-		
-		
-
-		return tabbedPane;
+		return panel;
 	}
 
 	@Override
@@ -191,15 +155,6 @@ public class ClientProgram extends JFrame implements ActionListener, DocumentLis
 			} else if(command.equals("REMOVE_BUDDY")) {
 				cts.removeBuddy(tfAddBuddy.getText().trim());
 				tfAddBuddy.setText("");
-			} else if(command.equals("ACCEPT_REQUEST")) {
-				String name = (String)(tableModelRequests.getValueAt(tblRequests.convertRowIndexToModel(tblRequests.getSelectedRow()), 0));
-				System.out.println(name);
-				cts.buddyAccepted(name);
-				tableModelRequests.remove(name);
-			} else if(command.equals("DELETE_REQUEST")) {
-				String name = (String)(tableModelRequests.getValueAt(tblRequests.convertRowIndexToModel(tblRequests.getSelectedRow()), 0));
-				cts.buddyDeleted(name);
-				tableModelRequests.remove(name);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -222,7 +177,7 @@ public class ClientProgram extends JFrame implements ActionListener, DocumentLis
 			getRootPane().setDefaultButton(btnAddBuddy);
 			getContentPane().remove(centerPanel);
 			getContentPane().remove(bottomPanel);
-			getContentPane().add(tabbedPanel, BorderLayout.CENTER);
+			getContentPane().add(buddyPanel, BorderLayout.CENTER);
 			setTitle(myName);
 			repaint();
 		} catch(LoginFailedException e) {
@@ -280,25 +235,20 @@ public class ClientProgram extends JFrame implements ActionListener, DocumentLis
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		
-		if(e.getSource() == tblBuddies) {
-			if(e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
-				int[] rows = tblBuddies.getSelectedRows();
-				for(int i = 0; i < rows.length; i++) {
-					String hisName = (String) tableModel.getValueAt(tblBuddies.convertRowIndexToModel(i), 0);
-					if(buddyList.get(hisName).status == BuddyInfo.ONLINE) {
-						if(chatWindowMap.get(hisName) == null) {
-							ChatDialog dialog = new ChatDialog(myName, hisName, this, cts);
-							chatWindowMap.put(hisName, dialog);
-						} else {
-							chatWindowMap.get(hisName).requestFocus();
-							chatWindowMap.get(hisName).setVisible(true);
-						}
+		if(e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+			int[] rows = tblBuddies.getSelectedRows();
+			for(int i = 0; i < rows.length; i++) {
+				String hisName = (String) tableModel.getValueAt(tblBuddies.convertRowIndexToModel(i), 0);
+				if(buddyList.get(hisName).status == BuddyInfo.ONLINE) {
+					if(chatWindowMap.get(hisName) == null) {
+						ChatDialog dialog = new ChatDialog(myName, hisName, this, cts);
+						chatWindowMap.put(hisName, dialog);
+					} else {
+						chatWindowMap.get(hisName).requestFocus();
+						chatWindowMap.get(hisName).setVisible(true);
 					}
 				}
 			}
-		} else {
-			btnAcceptRequest.setEnabled(tblRequests.getSelectedRows().length == 1);
-			btnDeleteRequest.setEnabled(tblRequests.getSelectedRows().length == 1);
 		}
 	}
 
@@ -355,10 +305,6 @@ public class ClientProgram extends JFrame implements ActionListener, DocumentLis
 				dialog.newFileSendAccepted(uname, Integer.parseInt(id), ip, port);
 			}
 		}	
-	}
-
-	public void newBuddyRequest(String buddyRequester) {
-		tableModelRequests.add(buddyRequester);
 	}
 
 }
