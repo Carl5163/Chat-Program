@@ -11,10 +11,10 @@ import javax.swing.event.*;
 import javax.swing.text.*;
 
 @SuppressWarnings("serial")
-public class ChatDialog extends JDialog implements ActionListener, DocumentListener , DropTargetListener{
+public class ChatDialog extends JDialog implements ActionListener, DocumentListener , DropTargetListener, FocusListener, KeyListener{
 	
 	private JTextPane tpMain;
-	private JTextField tfMain;
+	private JTextArea taMain;
 	private JButton btnSend;
 	private String hisName;
 	private String myName;
@@ -25,11 +25,17 @@ public class ChatDialog extends JDialog implements ActionListener, DocumentListe
 	private CTS cts;
 	private long lastMessageTime;
 	private Vector<File> fileList;
+	private int numUnseenMsgs = 0;
+	private Runnable ding;
+	private String title;
 	
 	public ChatDialog(String myName, String talkingTo, JFrame parent, CTS cts) {
 		
-		super(parent, "Chat with " + talkingTo, false);
-		
+		super(parent, false);
+		title = "Chat with " + talkingTo;
+		setTitle(title);
+		addFocusListener(this);
+		ding = (Runnable) Toolkit.getDefaultToolkit().getDesktopProperty("win.sound.exclamation");
 		fileList = new Vector<File>();
 		this.hisName = talkingTo;
 		this.myName = myName;
@@ -46,24 +52,31 @@ public class ChatDialog extends JDialog implements ActionListener, DocumentListe
 		
 
 		myFormat = new SimpleAttributeSet();
-		StyleConstants.setForeground(myFormat, Color.GRAY);		
+		StyleConstants.setForeground(myFormat, Color.BLUE);		
 
 		hisFormat = new SimpleAttributeSet();
-		StyleConstants.setForeground(hisFormat, Color.LIGHT_GRAY);
+		StyleConstants.setForeground(hisFormat, new Color(39,125,44));
 		
 
 		sysFormat = new SimpleAttributeSet();
-		StyleConstants.setForeground(hisFormat, Color.BLACK);
+		StyleConstants.setForeground(sysFormat, Color.BLACK);
+
 		
-		tfMain = new JTextField();
-		tfMain.getDocument().addDocumentListener(this);
+		taMain = new JTextArea();
+		taMain.setWrapStyleWord(true);
+		taMain.setLineWrap(true);
+		taMain.getDocument().addDocumentListener(this);
+		taMain.addKeyListener(this);
+		
+		scroll = new JScrollPane(taMain);
+		scroll.setPreferredSize(new Dimension(getWidth(),50));
 		
 		btnSend = new JButton("Send");
 		btnSend.setActionCommand("SEND");
 		btnSend.addActionListener(this);
 		
 		JPanel bottomPanel = new JPanel(new BorderLayout());
-		bottomPanel.add(tfMain, BorderLayout.CENTER);
+		bottomPanel.add(scroll, BorderLayout.CENTER);
 		bottomPanel.add(btnSend, BorderLayout.EAST);
 		panel.add(bottomPanel, BorderLayout.SOUTH);
 		
@@ -84,14 +97,14 @@ public class ChatDialog extends JDialog implements ActionListener, DocumentListe
 		    try {
 				long curTime = System.currentTimeMillis();
 				if(curTime - lastMessageTime > 60000) {
-					String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date(lastMessageTime));
+					String date = new SimpleDateFormat("dd-MM-yyyy").format(new Date(lastMessageTime));
 					String time = new SimpleDateFormat("hh:mm:ss a").format(new Date(lastMessageTime));
-					doc.insertString(doc.getLength(), "Last message: " + date + ", " + time + "\n", sysFormat);					
+					doc.insertString(doc.getLength(), "System: Last message: " + date + ", " + time + "\n", sysFormat);					
 				}
-				doc.insertString(doc.getLength(), myName + ": " + tfMain.getText().trim() + "\n", myFormat);
+				doc.insertString(doc.getLength(), myName + ": " + taMain.getText().trim() + "\n", myFormat);
 				lastMessageTime = curTime;
-				cts.send("CHAT_MESSAGE " + hisName + " " + System.currentTimeMillis() + " " + tfMain.getText().trim());
-				tfMain.setText("");
+				cts.send("CHAT_MESSAGE " + hisName + " " + System.currentTimeMillis() + " " + taMain.getText().trim());
+				taMain.setText("");
 			} catch (BadLocationException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
@@ -103,7 +116,7 @@ public class ChatDialog extends JDialog implements ActionListener, DocumentListe
 
 	@Override
 	public void insertUpdate(DocumentEvent arg0) {
-		btnSend.setEnabled(tfMain.getText().trim().length() > 0);		
+		btnSend.setEnabled(taMain.getText().trim().length() > 0);		
 	}
 
 	@Override
@@ -120,11 +133,19 @@ public class ChatDialog extends JDialog implements ActionListener, DocumentListe
 			if(!isVisible()) {
 				setVisible(true);
 			}
+			if(!hasFocus()) {
+				numUnseenMsgs++;
+				if(ding != null) {
+					ding.run();
+				}
+				setTitle(title + "(" + numUnseenMsgs + ")");
+				setVisible(true);
+			}
 			long curTime = System.currentTimeMillis();
 			if(curTime - lastMessageTime > 60000) {
-				String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date(lastMessageTime));
+				String date = new SimpleDateFormat("dd-MM-yyyy").format(new Date(lastMessageTime));
 				String time = new SimpleDateFormat("hh:mm:ss a").format(new Date(lastMessageTime));
-				doc.insertString(doc.getLength(), "Last message: " + date + ", " + time + "\n", sysFormat);
+				doc.insertString(doc.getLength(), "System: Last message: " + date + ", " + time + "\n", sysFormat);
 			}
 			lastMessageTime = curTime;
 			doc.insertString(doc.getLength(), hisName + ": " + message + "\n", hisFormat);
@@ -246,4 +267,52 @@ public class ChatDialog extends JDialog implements ActionListener, DocumentListe
 			e.printStackTrace();
 		}
 	}
+
+	public void buddyQuit(String hisName) {
+		try {
+			doc.insertString(doc.getLength(),"System: " + hisName + " just went offline.\n",  sysFormat);
+			btnSend.setEnabled(false);
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void buddyReturned(String hisName) {
+		try {
+			doc.insertString(doc.getLength(),"System: " + hisName + " has come back online.\n",  sysFormat);
+			btnSend.setEnabled(true);
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void focusGained(FocusEvent e) {
+		System.out.println("focusGained");
+		numUnseenMsgs = 0;
+		setTitle(title);
+	}
+
+	@Override
+	public void focusLost(FocusEvent e) {
+		System.out.println("focusLost");
+	}
+
+	@Override
+	public void keyPressed(KeyEvent arg0) {
+		if(arg0.getKeyCode() == KeyEvent.VK_ENTER) {
+			arg0.consume();
+			if(arg0.isControlDown()) {
+				taMain.setText(taMain.getText() + "\n");
+			} else {
+				btnSend.doClick();
+			}
+		}
+	}
+
+	@Override
+	public void keyReleased(KeyEvent arg0) {}
+
+	@Override
+	public void keyTyped(KeyEvent arg0) {}
 }
