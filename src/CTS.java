@@ -1,7 +1,5 @@
 import java.io.*;
 import java.net.*;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 import javax.swing.*;
